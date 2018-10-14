@@ -244,3 +244,48 @@ describe('GET /accounts/:id', () => {
             .end(done);
     });
 });
+
+describe('PATCH /accounts/:id', () => {
+    it('should update the account name', done => {
+        let hexId = _baseAccounts[0]._id.toHexString();
+        let body = { name: 'Some name' };
+
+        request(app)
+            .patch(`/accounts/${hexId}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .send(body)
+            .expect(200)
+            .expect(res => {
+                expect(res.body.body._id).toBe(hexId);
+                expect(res.body.body.name).toBe(body.name);
+            }).end(done);
+    });
+
+    it('should not update the account created by other user', done => {
+        let hexId = _baseAccounts[1]._id.toHexString();
+        let body = { name: 'Some name' };
+
+        request(app)
+            .patch(`/accounts/${hexId}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .send(body)
+            .expect(404)
+            .end(done);
+    });
+
+    it('should return 404 if account not found', done => {
+        request(app)
+            .patch(`/accounts/${new ObjectID()}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(404)
+            .end(done);
+    });
+
+    it('should return 404 for non-object ids', done => {
+        request(app)
+            .patch('/accounts/123')
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(404)
+            .end(done);
+    });
+});

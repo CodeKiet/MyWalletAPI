@@ -92,6 +92,8 @@ app.get('/accounts/:id', authenticate, async (req, res) => {
     }
 });
 
+// TODO: DELETE /accounts/:id
+
 app.patch('/accounts/:id', authenticate, async (req, res) => {
     let id = req.params.id;
     let body = _.pick(req.body, ['name']);
