@@ -5,10 +5,13 @@ const bcrypt = require('bcryptjs');
 
 const { app } = require('./../server');
 const { User } = require('./../models/user');
-const { _baseUsers, populateUsers } = require('./seed/seed');
+const { Account } = require('./../models/account');
+const { _baseUsers, _baseAccounts, populateUsers, populateAccounts } = require('./seed/seed');
 
 beforeEach(populateUsers);
+beforeEach(populateAccounts);
 
+//#region Users
 describe('POST /users', () => {
     it('should create a user', done => {
         let email = 'example@example.com';
@@ -153,3 +156,49 @@ describe('DELETE /users/me/token', () => {
             });
     });
 });
+//#endregion
+
+//#region Wallets
+describe('POST /accounts', () => {
+    it('should create a new account', done => {
+        let name = 'Bank X';
+        let balance = 2000;
+
+        request(app)
+            .post('/accounts')
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .send({ name, balance })
+            .expect(200)
+            .expect(res => {
+                expect(res.body.body.name).toBe(name);
+                expect(res.body.body.balance).toBe(balance)
+            })
+            .end((err, res) => {
+                if (err)
+                    return done(err);
+                
+                Account.find({ _creator: _baseUsers[0]._id }).then(accounts => {
+                    expect(accounts.length).toBe(2);
+                    expect(accounts[1]._id.toHexString()).toBe(res.body.body._id);
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+
+    it('should not create account with invalid body data', done => {
+        request(app)
+            .post('/accounts')
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(400)
+            .end(err => {
+                if (err)
+                    return done(err);
+
+                Account.find().then(accounts => {
+                    expect(accounts.length).toBe(_baseAccounts.length);
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+});
+//#endregion
