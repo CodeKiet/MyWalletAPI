@@ -88,11 +88,28 @@ app.get('/accounts/:id', authenticate, async (req, res) => {
         
         res.send(generateResponse(200, '', account));
     } catch (error) {
-        res.status(400).send(generateResponse(400, 'Bad request.'));
+        res.status(400).send(generateResponse(400, 'Bad request.', error));
     }
 });
 
-// TODO: DELETE /accounts/:id
+app.delete('/accounts/:id', authenticate, async (req, res) => {
+    let id = req.params.id;
+
+    if (!ObjectID.isValid(id))
+        return res.status(404).send(generateResponse(404, 'Invalid ID.'));
+
+    try {
+        // TODO Delete transactions when added
+        let account = await Account.findOneAndDelete({ _id: id, _creator: req.user._id });
+
+        if (!account)
+            return res.status(404).send(generateResponse(404, 'Account not found.'));
+
+        res.send(generateResponse(200, '', account));
+    } catch (error) {
+        res.status(400).send(generateResponse(400, 'Bad request.', error));
+    }
+});
 
 app.patch('/accounts/:id', authenticate, async (req, res) => {
     let id = req.params.id;
