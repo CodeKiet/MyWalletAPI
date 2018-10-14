@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 
 const { mongoose } = require('./db/mongoose');
 const { User } = require('./models/user');
+const { Account } = require('./models/account');
 const { authenticate } = require('./middleware/authenticate');
 const { generateResponse } = require('./utils/response');
 
@@ -14,6 +15,7 @@ const port = process.env.PORT;
 
 app.use(bodyParser.json())
 
+//#region  Users
 app.post('/users', async (req, res) => {
     try {
         let user = await new User(_.pick(req.body, ['email', 'password'])).save();
@@ -49,6 +51,22 @@ app.delete('/users/me/token', authenticate, async (req, res) => {
         res.status(400).send(generateResponse(400, 'Failed to delete token.'));
     }
 });
+//#endregion
+
+//#region Accounts
+app.post('/accounts', authenticate, async (req, res) => {
+    try {
+        let account = await new Account({
+            name: req.body.name,
+            balance: req.body.balance,
+            _creator: req.user._id
+        }).save();
+        res.send(generateResponse(200, '', account));
+    } catch (error) {
+        res.status(400).send(generateResponse(400, error.message));
+    }
+});
+//#endregion
 
 app.listen(port, () => console.log(`Server is up on port ${port}.`));
 
