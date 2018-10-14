@@ -1,4 +1,5 @@
 const { User } = require('./../models/user');
+const { generateResponse } = require('./../utils/response');
 
 const authenticate = async (req, res, next) => {
     let token = req.header('x-auth');
@@ -7,13 +8,13 @@ const authenticate = async (req, res, next) => {
         let user = await User.findByToken(token);
     
         if (!user)
-            return Promise.reject();
+            throw new Error();
 
         req.user = user;
         req.token = token;
         next();   
     } catch (error) {
-        res.status(401).send();
+        res.status(401).send(generateResponse(401, 'The request could not be authenticated.'));
     }
 };
 
