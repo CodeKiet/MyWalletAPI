@@ -154,6 +154,15 @@ app.post('/transactions', authenticate, async (req, res) => {
     }
 });
 
+app.get('/transactions', authenticate, async (req, res) => {
+    try {
+        let transactions = await Transaction.find({ _creator: req.user._id });
+        res.send(generateResponse(200, '', transactions));
+    } catch (error) {
+        res.status(400, '', error);
+    }
+});
+
 app.listen(port, () => console.log(`Server is up on port ${port}.`));
 
 module.exports = { app };

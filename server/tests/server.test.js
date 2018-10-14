@@ -432,3 +432,14 @@ describe('POST /transactions', () => {
             });
     });
 });
+
+describe('GET /transactions', () => {
+    it('should get all transactions', done => {
+        request(app)
+            .get('/transactions')
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(200)
+            .expect(res => expect(res.body.body.length).toBe(1))
+            .end(done);
+    });
+});
