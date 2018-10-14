@@ -11,7 +11,6 @@ const { _baseUsers, _baseAccounts, populateUsers, populateAccounts } = require('
 beforeEach(populateUsers);
 beforeEach(populateAccounts);
 
-//#region Users
 describe('POST /users', () => {
     it('should create a user', done => {
         let email = 'example@example.com';
@@ -156,9 +155,7 @@ describe('DELETE /users/me/token', () => {
             });
     });
 });
-//#endregion
 
-//#region Wallets
 describe('POST /accounts', () => {
     it('should create a new account', done => {
         let name = 'Bank X';
@@ -201,4 +198,4 @@ describe('POST /accounts', () => {
             });
     });
 });
-//#endregion
+

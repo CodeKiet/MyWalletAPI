@@ -15,7 +15,6 @@ const port = process.env.PORT;
 
 app.use(bodyParser.json())
 
-//#region  Users
 app.post('/users', async (req, res) => {
     try {
         let user = await new User(_.pick(req.body, ['email', 'password'])).save();
@@ -51,9 +50,7 @@ app.delete('/users/me/token', authenticate, async (req, res) => {
         res.status(400).send(generateResponse(400, 'Failed to delete token.'));
     }
 });
-//#endregion
 
-//#region Accounts
 app.post('/accounts', authenticate, async (req, res) => {
     try {
         let account = await new Account({
@@ -66,7 +63,15 @@ app.post('/accounts', authenticate, async (req, res) => {
         res.status(400).send(generateResponse(400, error.message));
     }
 });
-//#endregion
+
+app.get('/accounts', authenticate, async (req, res) => {
+    try {
+        let accounts = await Account.find({ _creator: req.user._id });
+        res.send(generateResponse(200, '', accounts));
+    } catch (error) {
+        res.status(generateResponse(400, '', error));
+    }
+});
 
 app.listen(port, () => console.log(`Server is up on port ${port}.`));
 
