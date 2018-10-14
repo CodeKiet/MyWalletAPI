@@ -209,3 +209,38 @@ describe('GET /accounts', () => {
             .end(done);
     });
 });
+
+describe('GET /accounts/:id', () => {
+    it('should return account doc', done => {
+        request(app)
+            .get(`/accounts/${_baseAccounts[0]._id}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(200)
+            .expect(res => expect(res.body.body._id).toBe(_baseAccounts[0]._id.toHexString()))
+            .end(done);
+    });
+
+    it('should not return account doc created by other user', done => {
+        request(app)
+            .get(`/accounts/${_baseAccounts[1]._id}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(404)
+            .end(done);
+    });
+
+    it('should return 404 if todo not found', done => {
+        request(app)
+            .get(`/accounts/${new ObjectID()}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(404)
+            .end(done);
+    });
+
+    it('should return 404 for non-object ids', done => {
+        request(app)
+            .get('/accounts/123')
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(404)
+            .end(done);
+    });
+});
