@@ -5,19 +5,19 @@ const bcrypt = require('bcryptjs');
 
 const { app } = require('./../server');
 const { User } = require('./../models/user');
-const { Account } = require('./../models/account');
+const { Wallet } = require('./../models/wallet');
 const { Transaction } = require('./../models/transaction');
 const { 
     _baseUsers,
-    _baseAccounts,
+    _baseWallets,
     _baseTransactions,
     populateUsers, 
-    populateAccounts, 
+    populateWallets, 
     populateTransactions 
 } = require('./seed/seed');
 
 beforeEach(populateUsers);
-beforeEach(populateAccounts);
+beforeEach(populateWallets);
 beforeEach(populateTransactions);
 
 describe('POST /users', () => {
@@ -165,13 +165,13 @@ describe('DELETE /users/me/token', () => {
     });
 });
 
-describe('POST /accounts', () => {
-    it('should create a new account', done => {
+describe('POST /wallets', () => {
+    it('should create a new wallet', done => {
         let name = 'Bank X';
         let balance = 2000;
 
         request(app)
-            .post('/accounts')
+            .post('/wallets')
             .set('x-auth', _baseUsers[0].tokens[0].token)
             .send({ name, balance })
             .expect(200)
@@ -183,35 +183,35 @@ describe('POST /accounts', () => {
                 if (err)
                     return done(err);
                 
-                Account.find({ _creator: _baseUsers[0]._id }).then(accounts => {
-                    expect(accounts.length).toBe(2);
-                    expect(accounts[1]._id.toHexString()).toBe(res.body.body._id);
+                Wallet.find({ _creator: _baseUsers[0]._id }).then(wallets => {
+                    expect(wallets.length).toBe(2);
+                    expect(wallets[1]._id.toHexString()).toBe(res.body.body._id);
                     done();
                 }).catch(e => done(e));
             });
     });
 
-    it('should not create account with invalid body data', done => {
+    it('should not create wallet with invalid body data', done => {
         request(app)
-            .post('/accounts')
+            .post('/wallets')
             .set('x-auth', _baseUsers[0].tokens[0].token)
             .expect(400)
             .end(err => {
                 if (err)
                     return done(err);
 
-                Account.find().then(accounts => {
-                    expect(accounts.length).toBe(_baseAccounts.length);
+                Wallet.find().then(wallets => {
+                    expect(wallets.length).toBe(_baseWallets.length);
                     done();
                 }).catch(e => done(e));
             });
     });
 });
 
-describe('GET /accounts', () => {
-    it('should get all accounts from first user', done => {
+describe('GET /wallets', () => {
+    it('should get all wallets from first user', done => {
         request(app)
-            .get('/accounts')
+            .get('/wallets')
             .set('x-auth', _baseUsers[0].tokens[0].token)
             .expect(200)
             .expect(res => expect(res.body.body.length).toBe(1))
@@ -219,27 +219,27 @@ describe('GET /accounts', () => {
     });
 });
 
-describe('GET /accounts/:id', () => {
-    it('should return account doc', done => {
+describe('GET /wallets/:id', () => {
+    it('should return wallet doc', done => {
         request(app)
-            .get(`/accounts/${_baseAccounts[0]._id}`)
+            .get(`/wallets/${_baseWallets[0]._id}`)
             .set('x-auth', _baseUsers[0].tokens[0].token)
             .expect(200)
-            .expect(res => expect(res.body.body._id).toBe(_baseAccounts[0]._id.toHexString()))
+            .expect(res => expect(res.body.body._id).toBe(_baseWallets[0]._id.toHexString()))
             .end(done);
     });
 
-    it('should not return account doc created by other user', done => {
+    it('should not return wallet doc created by other user', done => {
         request(app)
-            .get(`/accounts/${_baseAccounts[1]._id}`)
+            .get(`/wallets/${_baseWallets[1]._id}`)
             .set('x-auth', _baseUsers[0].tokens[0].token)
             .expect(404)
             .end(done);
     });
 
-    it('should return 404 if account not found', done => {
+    it('should return 404 if wallet not found', done => {
         request(app)
-            .get(`/accounts/${new ObjectID()}`)
+            .get(`/wallets/${new ObjectID()}`)
             .set('x-auth', _baseUsers[0].tokens[0].token)
             .expect(404)
             .end(done);
@@ -247,20 +247,20 @@ describe('GET /accounts/:id', () => {
 
     it('should return 404 for non-object ids', done => {
         request(app)
-            .get('/accounts/123')
+            .get('/wallets/123')
             .set('x-auth', _baseUsers[0].tokens[0].token)
             .expect(404)
             .end(done);
     });
 });
 
-describe('PATCH /accounts/:id', () => {
-    it('should update the account name', done => {
-        let hexId = _baseAccounts[0]._id.toHexString();
+describe('PATCH /wallets/:id', () => {
+    it('should update the wallet name', done => {
+        let hexId = _baseWallets[0]._id.toHexString();
         let body = { name: 'Some name' };
 
         request(app)
-            .patch(`/accounts/${hexId}`)
+            .patch(`/wallets/${hexId}`)
             .set('x-auth', _baseUsers[0].tokens[0].token)
             .send(body)
             .expect(200)
@@ -270,21 +270,21 @@ describe('PATCH /accounts/:id', () => {
             }).end(done);
     });
 
-    it('should not update the account created by other user', done => {
-        let hexId = _baseAccounts[1]._id.toHexString();
+    it('should not update the wallet created by other user', done => {
+        let hexId = _baseWallets[1]._id.toHexString();
         let body = { name: 'Some name' };
 
         request(app)
-            .patch(`/accounts/${hexId}`)
+            .patch(`/wallets/${hexId}`)
             .set('x-auth', _baseUsers[0].tokens[0].token)
             .send(body)
             .expect(404)
             .end(done);
     });
 
-    it('should return 404 if account not found', done => {
+    it('should return 404 if wallet not found', done => {
         request(app)
-            .patch(`/accounts/${new ObjectID()}`)
+            .patch(`/wallets/${new ObjectID()}`)
             .set('x-auth', _baseUsers[0].tokens[0].token)
             .expect(404)
             .end(done);
@@ -292,19 +292,19 @@ describe('PATCH /accounts/:id', () => {
 
     it('should return 404 for non-object ids', done => {
         request(app)
-            .patch('/accounts/123')
+            .patch('/wallets/123')
             .set('x-auth', _baseUsers[0].tokens[0].token)
             .expect(404)
             .end(done);
     });
 });
 
-describe('DELETE /accounts/:id', () => {
-    it('should remove an account', done => {
-        let hexId = _baseAccounts[1]._id.toHexString();
+describe('DELETE /wallets/:id', () => {
+    it('should remove an wallet', done => {
+        let hexId = _baseWallets[1]._id.toHexString();
 
         request(app)
-            .delete(`/accounts/${hexId}`)
+            .delete(`/wallets/${hexId}`)
             .set('x-auth', _baseUsers[1].tokens[0].token)
             .expect(200)
             .expect(res => expect(res.body.body._id).toBe(hexId))
@@ -312,34 +312,34 @@ describe('DELETE /accounts/:id', () => {
                 if (err)
                     return done(err);
 
-                Account.findById(hexId).then(account => {
-                    expect(account).toBeFalsy();
+                Wallet.findById(hexId).then(wallet => {
+                    expect(wallet).toBeFalsy();
                     done();
                 }).catch(e => done(e));
             });
     });
 
-    it('should not remove an account created by other user', done => {
-        let hexId = _baseAccounts[0]._id.toHexString();
+    it('should not remove an wallet created by other user', done => {
+        let hexId = _baseWallets[0]._id.toHexString();
 
         request(app)
-            .delete(`/accounts/${hexId}`)
+            .delete(`/wallets/${hexId}`)
             .set('x-auth', _baseUsers[1].tokens[0].token)
             .expect(404)
             .end(err => {
                 if (err)
                     return done(err);
 
-                Account.findById(hexId).then(account => {
-                    expect(account).toBeTruthy();
+                Wallet.findById(hexId).then(wallet => {
+                    expect(wallet).toBeTruthy();
                     done();
                 }).catch(e => done(e));
             });
     });
 
-    it('should return 404 if account not found', done => {
+    it('should return 404 if wallet not found', done => {
         request(app)
-            .delete(`/accounts/${new ObjectID()}`)
+            .delete(`/wallets/${new ObjectID()}`)
             .set('x-auth', _baseUsers[1].tokens[0].token)
             .expect(404)
             .end(done);
@@ -347,7 +347,7 @@ describe('DELETE /accounts/:id', () => {
 
     it('should return 404 for non-object ids', done => {
         request(app)
-            .delete('/accounts/123')
+            .delete('/wallets/123')
             .set('x-auth', _baseUsers[1].tokens[0].token)
             .expect(404)
             .end(done);
@@ -359,7 +359,7 @@ describe('POST /transactions', () => {
         let body = {
             note: 'Some note',
             value: 500,
-            _account: _baseAccounts[0]._id.toHexString()
+            _wallet: _baseWallets[0]._id.toHexString()
         };
 
         request(app)
@@ -374,11 +374,11 @@ describe('POST /transactions', () => {
 
                 try {
                     let transactions = await Transaction.find();
-                    let account = await Account.findById({ _id: body._account });
-                    let newBalance = _baseAccounts[0].balance + _baseTransactions[0].value + body.value;
+                    let wallet = await Wallet.findById({ _id: body._wallet });
+                    let newBalance = _baseWallets[0].balance + _baseTransactions[0].value + body.value;
 
                     expect(transactions.length).toBe(3);
-                    expect(account.balance).toBe(newBalance);
+                    expect(wallet.balance).toBe(newBalance);
                     done();
                 } catch (e) {
                     done(e);
@@ -389,7 +389,7 @@ describe('POST /transactions', () => {
     it('should not create transaction with invalid body data', done => {
         let body = {
             note: 'Some note',
-            _account: _baseAccounts[0]._id.toHexString()
+            _wallet: _baseWallets[0]._id.toHexString()
         };
         
         request(app)
@@ -413,7 +413,7 @@ describe('POST /transactions', () => {
         let body = {
             note: 'Some note',
             value: 500,
-            _account: _baseAccounts[0]._id.toHexString()
+            _wallet: _baseWallets[0]._id.toHexString()
         };
 
         request(app)
@@ -465,6 +465,33 @@ describe('GET /transactions/:id', () => {
     it('should return 404 if transaction not found', done => {
         request(app)
             .get(`/transactions/${new ObjectID()}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(404)
+            .end(done);
+    });
+});
+
+describe('GET /transactions/wallets/:id', () => {
+    it('should return transactions from first wallet', done => {
+        request(app)
+            .get(`/transactions/wallets/${_baseWallets[0]._id}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(200)
+            .expect(res => expect(res.body.body.length).toBe(1))
+            .end(done);
+    });
+
+    it('should not return transactions from other user wallet', done => {
+        request(app)
+            .get(`/transactions/wallets/${_baseWallets[1]._id}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(400)
+            .end(done);
+    });
+
+    it('should return 404 if wallet not found', done => {
+        request(app)
+            .get(`/transactions/wallets/${new ObjectID()}`)
             .set('x-auth', _baseUsers[0].tokens[0].token)
             .expect(404)
             .end(done);

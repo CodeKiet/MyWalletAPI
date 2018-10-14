@@ -7,7 +7,7 @@ const { ObjectID } = require('mongodb');
 
 const { mongoose } = require('./db/mongoose');
 const { User } = require('./models/user');
-const { Account } = require('./models/account');
+const { Wallet } = require('./models/wallet');
 const { Transaction } = require('./models/transaction');
 const { authenticate } = require('./middleware/authenticate');
 const { generateResponse } = require('./utils/response');
@@ -53,47 +53,47 @@ app.delete('/users/me/token', authenticate, async (req, res) => {
     }
 });
 
-app.post('/accounts', authenticate, async (req, res) => {
+app.post('/wallets', authenticate, async (req, res) => {
     try {
-        let account = await new Account({
+        let wallet = await new Wallet({
             name: req.body.name,
             balance: req.body.balance,
             _creator: req.user._id
         }).save();
-        res.send(generateResponse(200, '', account));
+        res.send(generateResponse(200, '', wallet));
     } catch (error) {
         res.status(400).send(generateResponse(400, error.message));
     }
 });
 
-app.get('/accounts', authenticate, async (req, res) => {
+app.get('/wallets', authenticate, async (req, res) => {
     try {
-        let accounts = await Account.find({ _creator: req.user._id });
-        res.send(generateResponse(200, '', accounts));
+        let wallets = await Wallet.find({ _creator: req.user._id });
+        res.send(generateResponse(200, '', wallets));
     } catch (error) {
         res.status(generateResponse(400, '', error));
     }
 });
 
-app.get('/accounts/:id', authenticate, async (req, res) => {
+app.get('/wallets/:id', authenticate, async (req, res) => {
     let id = req.params.id;
 
     if (!ObjectID.isValid(id))
         return res.status(404).send(generateResponse(404, 'Invalid ID.'));
 
     try {
-        let account = await Account.findOne({ _id: id, _creator: req.user._id });
+        let wallet = await Wallet.findOne({ _id: id, _creator: req.user._id });
 
-        if (!account)
-            return res.status(404).send(generateResponse(404, 'Account not found.'));
+        if (!wallet)
+            return res.status(404).send(generateResponse(404, 'Wallet not found.'));
         
-        res.send(generateResponse(200, '', account));
+        res.send(generateResponse(200, '', wallet));
     } catch (error) {
         res.status(400).send(generateResponse(400, 'Bad request.', error));
     }
 });
 
-app.delete('/accounts/:id', authenticate, async (req, res) => {
+app.delete('/wallets/:id', authenticate, async (req, res) => {
     let id = req.params.id;
 
     if (!ObjectID.isValid(id))
@@ -101,18 +101,18 @@ app.delete('/accounts/:id', authenticate, async (req, res) => {
 
     try {
         // TODO Delete transactions when added
-        let account = await Account.findOneAndDelete({ _id: id, _creator: req.user._id });
+        let wallet = await Wallet.findOneAndDelete({ _id: id, _creator: req.user._id });
 
-        if (!account)
-            return res.status(404).send(generateResponse(404, 'Account not found.'));
+        if (!wallet)
+            return res.status(404).send(generateResponse(404, 'Wallet not found.'));
 
-        res.send(generateResponse(200, '', account));
+        res.send(generateResponse(200, '', wallet));
     } catch (error) {
         res.status(400).send(generateResponse(400, 'Bad request.', error));
     }
 });
 
-app.patch('/accounts/:id', authenticate, async (req, res) => {
+app.patch('/wallets/:id', authenticate, async (req, res) => {
     let id = req.params.id;
     let body = _.pick(req.body, ['name']);
 
@@ -120,12 +120,12 @@ app.patch('/accounts/:id', authenticate, async (req, res) => {
         return res.status(404).send(generateResponse(404, 'Invalid ID'));
 
     try {
-        let account = await Account.findOneAndUpdate({ _id: id, _creator: req.user.id }, { $set: body }, { new: true });
+        let wallet = await Wallet.findOneAndUpdate({ _id: id, _creator: req.user.id }, { $set: body }, { new: true });
 
-        if (!account)
-            return res.status(404).send(generateResponse(404, 'Account not found.'));
+        if (!wallet)
+            return res.status(404).send(generateResponse(404, 'Wallet not found.'));
         
-        res.send(generateResponse(200, '', account));
+        res.send(generateResponse(200, '', wallet));
     } catch (error) {
         res.status(400).send(generateResponse(400, 'Bad request'));
     }
@@ -133,17 +133,17 @@ app.patch('/accounts/:id', authenticate, async (req, res) => {
 
 app.post('/transactions', authenticate, async (req, res) => {
     try {
-        let body = _.pick(req.body, ['note', 'value', '_account']);
+        let body = _.pick(req.body, ['note', 'value', '_wallet']);
         
-        if (!ObjectID.isValid(body._account))
-            throw new Error('Invalid account ID.');
+        if (!ObjectID.isValid(body._wallet))
+            throw new Error('Invalid wallet ID.');
         
-        let account = await Account.findById(body._account);
+        let wallet = await Wallet.findById(body._wallet);
 
-        if (!account)
-            throw new Error('Account not found.');
-        else if(account._creator.toHexString() !== req.user._id.toHexString())
-            throw new Error('Invalid account.');
+        if (!wallet)
+            throw new Error('Wallet not found.');
+        else if(wallet._creator.toHexString() !== req.user._id.toHexString())
+            throw new Error('Invalid wallet.');
         
         body._creator = req.user._id;
 
@@ -181,14 +181,21 @@ app.get('/transactions/:id', authenticate, async (req, res) => {
     }
 });
 
-app.get('/transactions/accounts/:id', authenticate, async (req, res) => {
+app.get('/transactions/wallets/:id', authenticate, async (req, res) => {
     let id = req.params.id;
 
     if (!ObjectID.isValid(id))
         return res.status(404).send(generateResponse(404, 'Invalid ID.'));
 
     try {
-        let transactions = await Transaction.find({ _creator: req.user._id, _account: id });        
+        let wallet = await Wallet.findById(id);
+        
+        if (!wallet) 
+            return res.status(404).send(generateResponse(404, 'Wallet not found.'));
+        else if (wallet._creator.toHexString() !== req.user._id.toHexString())
+            throw new Error('Invalid wallet.');
+
+        let transactions = await Transaction.find({ _creator: req.user._id, _wallet: id });        
         res.send(generateResponse(200, '', transactions));
     } catch (error) {
         res.status(400).send(generateResponse(400, 'Bad request.', error));

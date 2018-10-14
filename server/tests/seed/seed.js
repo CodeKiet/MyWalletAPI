@@ -2,7 +2,7 @@ const { ObjectID } = require('mongodb');
 const jwt = require('jsonwebtoken');
 
 const { User } = require('./../../models/user');
-const { Account } = require('./../../models/account');
+const { Wallet } = require('../../models/wallet');
 const { Transaction } = require('./../../models/transaction');
 
 const userOneId = new ObjectID();
@@ -26,7 +26,7 @@ const _baseUsers = [{
     }]
 }];
 
-const _baseAccounts = [{
+const _baseWallets = [{
     _id: new ObjectID(),
     name: 'Bank 1',
     balance: 1000,
@@ -43,15 +43,15 @@ const _baseTransactions = [{
     note: 'Some note',
     value: 100,
     timestamp: new Date().getTime(),
-    _account: _baseAccounts[0]._id,
-    _creator: _baseAccounts[0]._creator
+    _wallet: _baseWallets[0]._id,
+    _creator: _baseWallets[0]._creator
 }, {
     _id: new ObjectID(),
     note: 'Another note',
     value: 500,
     timestamp: new Date().getTime(),
-    _account: _baseAccounts[1]._id,
-    _creator: _baseAccounts[1]._creator
+    _wallet: _baseWallets[1]._id,
+    _creator: _baseWallets[1]._creator
 }];
 
 const populateUsers = done => {
@@ -63,12 +63,12 @@ const populateUsers = done => {
     }).then(() => done());
 };
 
-const populateAccounts = done => {
-    Account.deleteMany({}).then(() => {
-        let accountOne = new Account(_baseAccounts[0]).save();
-        let accountTwo = new Account(_baseAccounts[1]).save();
+const populateWallets = done => {
+    Wallet.deleteMany({}).then(() => {
+        let walletOne = new Wallet(_baseWallets[0]).save();
+        let walletTwo = new Wallet(_baseWallets[1]).save();
 
-        return Promise.all([accountOne, accountTwo]);
+        return Promise.all([walletOne, walletTwo]);
     }).then(() => done());
 };
 
@@ -83,9 +83,9 @@ const populateTransactions = done => {
 
 module.exports = { 
     _baseUsers, 
-    _baseAccounts, 
+    _baseWallets, 
     _baseTransactions, 
     populateUsers,
-    populateAccounts, 
+    populateWallets, 
     populateTransactions 
 };

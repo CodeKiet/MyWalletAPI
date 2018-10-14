@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const { Account } = require('./account');
+const { Wallet } = require('./wallet');
 
 const TransactionSchema = new mongoose.Schema({
     note: {
@@ -14,7 +14,7 @@ const TransactionSchema = new mongoose.Schema({
     timestamp: {
         type: Number
     },
-    _account: {
+    _wallet: {
         type: mongoose.Schema.Types.ObjectId,
         required: true
     },
@@ -28,11 +28,11 @@ TransactionSchema.pre('save', async function(next) {
     let transaction = this;
     transaction.timestamp = new Date().getTime();
 
-    let account = await Account.findById(transaction._account);
+    let wallet = await Wallet.findById(transaction._wallet);
 
     if (transaction.isNew) {
-        account.balance += transaction.value;
-        await Account.findOneAndUpdate({ _id: account._id, _creator: transaction._creator }, { $set: account });
+        wallet.balance += transaction.value;
+        await Wallet.findOneAndUpdate({ _id: wallet._id, _creator: transaction._creator }, { $set: wallet });
     } else if (transaction.isModified('value')) {
         // ...
     }
