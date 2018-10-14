@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 
 const { mongoose } = require('./db/mongoose');
 const { User } = require('./models/user');
+const { authenticate } = require('./middleware/authenticate');
 
 const app = express();
 const port = process.env.PORT;
@@ -32,6 +33,10 @@ app.post('/users/login', async (req, res) => {
     } catch (error) {
         res.status(400).send(error);
     }
+});
+
+app.get('/users/me', authenticate, (req, res) => {
+    res.send(req.user);
 });
 
 app.listen(port, () => console.log(`Server is up on port ${port}.`));
