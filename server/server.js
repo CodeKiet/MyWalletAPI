@@ -92,6 +92,25 @@ app.get('/accounts/:id', authenticate, async (req, res) => {
     }
 });
 
+app.patch('/accounts/:id', authenticate, async (req, res) => {
+    let id = req.params.id;
+    let body = _.pick(req.body, ['name']);
+
+    if (!ObjectID.isValid(id)) 
+        return res.status(404).send(generateResponse(404, 'Invalid ID'));
+
+    try {
+        let account = await Account.findOneAndUpdate({ _id: id, _creator: req.user.id }, { $set: body }, { new: true });
+
+        if (!account)
+            return res.status(404).send(generateResponse(404, 'Account not found.'));
+        
+        res.send(generateResponse(200, '', account));
+    } catch (error) {
+        res.status(400).send(generateResponse(400, 'Bad request'));
+    }
+});
+
 app.listen(port, () => console.log(`Server is up on port ${port}.`));
 
 module.exports = { app };
