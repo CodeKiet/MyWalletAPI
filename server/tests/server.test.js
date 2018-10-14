@@ -289,3 +289,58 @@ describe('PATCH /accounts/:id', () => {
             .end(done);
     });
 });
+
+describe('DELETE /accounts/:id', () => {
+    it('should remove an account', done => {
+        let hexId = _baseAccounts[1]._id.toHexString();
+
+        request(app)
+            .delete(`/accounts/${hexId}`)
+            .set('x-auth', _baseUsers[1].tokens[0].token)
+            .expect(200)
+            .expect(res => expect(res.body.body._id).toBe(hexId))
+            .end(err => {
+                if (err)
+                    return done(err);
+
+                Account.findById(hexId).then(account => {
+                    expect(account).toBeFalsy();
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+
+    it('should not remove an account created by other user', done => {
+        let hexId = _baseAccounts[0]._id.toHexString();
+
+        request(app)
+            .delete(`/accounts/${hexId}`)
+            .set('x-auth', _baseUsers[1].tokens[0].token)
+            .expect(404)
+            .end(err => {
+                if (err)
+                    return done(err);
+
+                Account.findById(hexId).then(account => {
+                    expect(account).toBeTruthy();
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+
+    it('should return 404 if account not found', done => {
+        request(app)
+            .delete(`/accounts/${new ObjectID()}`)
+            .set('x-auth', _baseUsers[1].tokens[0].token)
+            .expect(404)
+            .end(done);
+    });
+
+    it('should return 404 for non-object ids', done => {
+        request(app)
+            .delete('/accounts/123')
+            .set('x-auth', _baseUsers[1].tokens[0].token)
+            .expect(404)
+            .end(done);
+    });
+});
