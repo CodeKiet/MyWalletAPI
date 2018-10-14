@@ -39,12 +39,14 @@ const _baseAccounts = [{
 }];
 
 const _baseTransactions = [{
+    _id: new ObjectID(),
     note: 'Some note',
     value: 100,
     timestamp: new Date().getTime(),
     _account: _baseAccounts[0]._id,
     _creator: _baseAccounts[0]._creator
 }, {
+    _id: new ObjectID(),
     note: 'Another note',
     value: 500,
     timestamp: new Date().getTime(),

@@ -237,7 +237,7 @@ describe('GET /accounts/:id', () => {
             .end(done);
     });
 
-    it('should return 404 if todo not found', done => {
+    it('should return 404 if account not found', done => {
         request(app)
             .get(`/accounts/${new ObjectID()}`)
             .set('x-auth', _baseUsers[0].tokens[0].token)
@@ -440,6 +440,33 @@ describe('GET /transactions', () => {
             .set('x-auth', _baseUsers[0].tokens[0].token)
             .expect(200)
             .expect(res => expect(res.body.body.length).toBe(1))
+            .end(done);
+    });
+});
+
+describe('GET /transactions/:id', () => {
+    it('should return transaction doc', done => {
+        request(app)
+            .get(`/transactions/${_baseTransactions[0]._id}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(200)
+            .expect(res => expect(res.body.body._id).toBe(_baseTransactions[0]._id.toHexString()))
+            .end(done);
+    });
+
+    it('should not return transaction doc created by other user', done => {
+        request(app)
+            .get(`/transactions/${_baseTransactions[1]._id}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(404)
+            .end(done);
+    });
+
+    it('should return 404 if transaction not found', done => {
+        request(app)
+            .get(`/transactions/${new ObjectID()}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(404)
             .end(done);
     });
 });
