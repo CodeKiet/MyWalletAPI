@@ -199,3 +199,13 @@ describe('POST /accounts', () => {
     });
 });
 
+describe('GET /accounts', () => {
+    it('should get all accounts from first user', done => {
+        request(app)
+            .get('/accounts')
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(200)
+            .expect(res => expect(res.body.body.length).toBe(1))
+            .end(done);
+    });
+});
