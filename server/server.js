@@ -13,12 +13,13 @@ const port = process.env.PORT;
 app.use(bodyParser.json())
 
 app.post('/users', async (req, res) => {
-    let user = new User(_.pick(req.body, ['email', 'password']));
-
-    user.save()
-        .then(() => user.generateAuthToken())
-        .then(token => res.header('x-auth', token).send(user))
-        .catch(e => res.status(400).send(e));
+    try {
+        let user = await new User(_.pick(req.body, ['email', 'password'])).save();
+        let token = await user.generateAuthToken();
+        res.header('x-auth', token).send(user);
+    } catch (error) {
+        res.status(400).send(error);   
+    }
 });
 
 app.listen(port, () => console.log(`Server is up on port ${port}.`));
