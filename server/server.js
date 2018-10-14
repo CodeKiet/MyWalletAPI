@@ -8,6 +8,7 @@ const { ObjectID } = require('mongodb');
 const { mongoose } = require('./db/mongoose');
 const { User } = require('./models/user');
 const { Account } = require('./models/account');
+const { Transaction } = require('./models/transaction');
 const { authenticate } = require('./middleware/authenticate');
 const { generateResponse } = require('./utils/response');
 
@@ -127,6 +128,18 @@ app.patch('/accounts/:id', authenticate, async (req, res) => {
         res.send(generateResponse(200, '', account));
     } catch (error) {
         res.status(400).send(generateResponse(400, 'Bad request'));
+    }
+});
+
+app.post('/transactions', authenticate, async (req, res) => {
+    try {
+        let body = _.pick(req.body, ['note', 'value', 'timestamp', '_account']);
+        body._creator = req.user._id;
+
+        let transaction = await new Transaction(body).save();
+        res.send(generateResponse(200, '', transaction));
+    } catch (error) {
+        res.status(400).send(generateResponse(400, '', error));
     }
 });
 
