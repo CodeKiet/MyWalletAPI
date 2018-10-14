@@ -163,6 +163,24 @@ app.get('/transactions', authenticate, async (req, res) => {
     }
 });
 
+app.get('/transactions/:id', authenticate, async (req, res) => {
+    let id = req.params.id;
+    
+    if (!ObjectID.isValid(id))
+        return res.status(404).send(generateResponse(404, 'Invalid ID.'));
+
+    try {
+        let transaction = await Transaction.findOne({ _id: id, _creator: req.user._id });
+
+        if (!transaction)
+            return res.status(404).send(generateResponse(404, 'Transaction not found.'));
+        
+        res.send(generateResponse(200, '', transaction));
+    } catch (error) {
+        res.status(400).send(generateResponse(400, 'Bad request.', error));
+    }
+});
+
 app.listen(port, () => console.log(`Server is up on port ${port}.`));
 
 module.exports = { app };
