@@ -22,6 +22,18 @@ app.post('/users', async (req, res) => {
     }
 });
 
+app.post('/users/login', async (req, res) => {
+    let body = _.pick(req.body, ['email', 'password']);
+
+    try {
+        let user = await User.findByCredentials(body.email, body.password);
+        let token = await user.generateAuthToken();
+        res.header('x-auth', token).send(user);
+    } catch (error) {
+        res.status(400).send(error);
+    }
+});
+
 app.listen(port, () => console.log(`Server is up on port ${port}.`));
 
 module.exports = { app };
