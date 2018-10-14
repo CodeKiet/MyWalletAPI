@@ -133,13 +133,24 @@ app.patch('/accounts/:id', authenticate, async (req, res) => {
 
 app.post('/transactions', authenticate, async (req, res) => {
     try {
-        let body = _.pick(req.body, ['note', 'value', 'timestamp', '_account']);
+        let body = _.pick(req.body, ['note', 'value', '_account']);
+        
+        if (!ObjectID.isValid(body._account))
+            throw new Error('Invalid account ID.');
+        
+        let account = await Account.findById(body._account);
+
+        if (!account)
+            throw new Error('Account not found.');
+        else if(account._creator.toHexString() !== req.user._id.toHexString())
+            throw new Error('Invalid account.');
+        
         body._creator = req.user._id;
 
         let transaction = await new Transaction(body).save();
         res.send(generateResponse(200, '', transaction));
     } catch (error) {
-        res.status(400).send(generateResponse(400, '', error));
+        res.status(400).send(generateResponse(400, error.message));
     }
 });
 

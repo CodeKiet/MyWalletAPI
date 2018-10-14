@@ -6,10 +6,19 @@ const bcrypt = require('bcryptjs');
 const { app } = require('./../server');
 const { User } = require('./../models/user');
 const { Account } = require('./../models/account');
-const { _baseUsers, _baseAccounts, populateUsers, populateAccounts } = require('./seed/seed');
+const { Transaction } = require('./../models/transaction');
+const { 
+    _baseUsers,
+    _baseAccounts,
+    _baseTransactions,
+    populateUsers, 
+    populateAccounts, 
+    populateTransactions 
+} = require('./seed/seed');
 
 beforeEach(populateUsers);
 beforeEach(populateAccounts);
+beforeEach(populateTransactions);
 
 describe('POST /users', () => {
     it('should create a user', done => {
@@ -342,5 +351,84 @@ describe('DELETE /accounts/:id', () => {
             .set('x-auth', _baseUsers[1].tokens[0].token)
             .expect(404)
             .end(done);
+    });
+});
+
+describe('POST /transactions', () => {
+    it('should create a transaction', done => {
+        let body = {
+            note: 'Some note',
+            value: 500,
+            _account: _baseAccounts[0]._id.toHexString()
+        };
+
+        request(app)
+            .post('/transactions')
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .send(body)
+            .expect(200)
+            .expect(res => expect(res.body.body).toBeTruthy())
+            .end(async err => {
+                if (err)
+                    return done(err);
+
+                try {
+                    let transactions = await Transaction.find();
+                    let account = await Account.findById({ _id: body._account });
+                    let newBalance = _baseAccounts[0].balance + _baseTransactions[0].value + body.value;
+
+                    expect(transactions.length).toBe(3);
+                    expect(account.balance).toBe(newBalance);
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            });
+    });
+
+    it('should not create transaction with invalid body data', done => {
+        let body = {
+            note: 'Some note',
+            _account: _baseAccounts[0]._id.toHexString()
+        };
+        
+        request(app)
+            .post('/transactions')
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .send(body)
+            .expect(400)
+            .expect(res => expect(res.body.body).toBeFalsy())
+            .end(async err => {
+                if (err)
+                    return done(err);
+
+                Transaction.find().then(transactions => {
+                    expect(transactions.length).toBe(2);
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+
+    it('should not created transaction for other user', done => {
+        let body = {
+            note: 'Some note',
+            value: 500,
+            _account: _baseAccounts[0]._id.toHexString()
+        };
+
+        request(app)
+            .post('/transactions')
+            .set('x-auth', _baseUsers[1].tokens[0].token)
+            .send(body)
+            .expect(400)
+            .end(async err => {
+                if (err)
+                    return done(err);
+
+                Transaction.find().then(transactions => {
+                    expect(transactions.length).toBe(2);
+                    done();
+                }).catch(e => done(e));
+            });
     });
 });

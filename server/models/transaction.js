@@ -12,8 +12,7 @@ const TransactionSchema = new mongoose.Schema({
         required: true
     },
     timestamp: {
-        type: Number,
-        required: true
+        type: Number
     },
     _account: {
         type: mongoose.Schema.Types.ObjectId,
@@ -27,6 +26,8 @@ const TransactionSchema = new mongoose.Schema({
 
 TransactionSchema.pre('save', async function(next) {
     let transaction = this;
+    transaction.timestamp = new Date().getTime();
+
     let account = await Account.findById(transaction._account);
 
     if (transaction.isNew) {

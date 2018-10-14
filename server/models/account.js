@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const Account = mongoose.model('Account', {
+const AccountSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
@@ -16,5 +16,7 @@ const Account = mongoose.model('Account', {
         required: true
     }
 });
+
+const Account = mongoose.model('Account', AccountSchema);
 
 module.exports = { Account };

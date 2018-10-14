@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 
 const { User } = require('./../../models/user');
 const { Account } = require('./../../models/account');
+const { Transaction } = require('./../../models/transaction');
 
 const userOneId = new ObjectID();
 const userTwoId = new ObjectID();
@@ -37,6 +38,20 @@ const _baseAccounts = [{
     _creator: userTwoId
 }];
 
+const _baseTransactions = [{
+    note: 'Some note',
+    value: 100,
+    timestamp: new Date().getTime(),
+    _account: _baseAccounts[0]._id,
+    _creator: _baseAccounts[0]._creator
+}, {
+    note: 'Another note',
+    value: 500,
+    timestamp: new Date().getTime(),
+    _account: _baseAccounts[1]._id,
+    _creator: _baseAccounts[1]._creator
+}];
+
 const populateUsers = done => {
     User.deleteMany({}).then(() => {
         let userOne = new User(_baseUsers[0]).save();
@@ -55,4 +70,20 @@ const populateAccounts = done => {
     }).then(() => done());
 };
 
-module.exports = { _baseUsers, _baseAccounts, populateUsers, populateAccounts };
+const populateTransactions = done => {
+    Transaction.deleteMany({}).then(() => {
+        let transactionOne = new Transaction(_baseTransactions[0]).save();
+        let transactionTwo = new Transaction(_baseTransactions[1]).save();
+
+        return Promise.all([transactionOne, transactionTwo]);
+    }).then(() => done());
+};
+
+module.exports = { 
+    _baseUsers, 
+    _baseAccounts, 
+    _baseTransactions, 
+    populateUsers,
+    populateAccounts, 
+    populateTransactions 
+};
