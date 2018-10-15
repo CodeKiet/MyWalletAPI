@@ -428,7 +428,7 @@ describe('POST /transactions', () => {
             });
     });
 
-    it('should not created transaction for other user', done => {
+    it('should not create transaction for other user', done => {
         let body = {
             note: 'Some note',
             value: 500,
@@ -504,7 +504,7 @@ describe('GET /transactions/wallets/:id', () => {
         request(app)
             .get(`/transactions/wallets/${_baseWallets[1]._id}`)
             .set('x-auth', _baseUsers[0].tokens[0].token)
-            .expect(400)
+            .expect(404)
             .end(done);
     });
 

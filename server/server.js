@@ -30,11 +30,11 @@ app.post('/users', async (req, res) => {
 });
 
 app.post('/users/login', async (req, res) => {
-    let body = _.pick(req.body, ['email', 'password']);
-
     try {
+        let body = _.pick(req.body, ['email', 'password']);
         let user = await User.findByCredentials(body.email, body.password);
         let token = await user.generateAuthToken();
+
         res.header('x-auth', token).send(generateResponse(200, '', user));
     } catch (error) {
         res.status(400).send(generateResponse(400, 'Invalid email and/or password.'));
@@ -78,8 +78,7 @@ app.get('/wallets', authenticate, async (req, res) => {
 
 app.get('/wallets/:id', authenticate, validateId, async (req, res) => {
     try {
-        let id = req.params.id;
-        let wallet = await Wallet.findOne({ _id: id, _creator: req.user._id });
+        let wallet = await Wallet.findOne({ _id: req.params.id, _creator: req.user._id });
 
         if (!wallet)
             return res.status(404).send(generateResponse(404, 'Wallet not found.'));
@@ -95,11 +94,10 @@ app.delete('/wallets/:id', authenticate, validateId, async (req, res) => {
         let id = req.params.id;
         let wallet = await Wallet.findOneAndDelete({ _id: id, _creator: req.user._id });
 
-        if (!wallet)
+        if (_.isNull(wallet))
             return res.status(404).send(generateResponse(404, 'Wallet not found.'));
 
         await Transaction.deleteMany({ _wallet: id });
-
         res.send(generateResponse(200, '', wallet));
     } catch (error) {
         res.status(400).send(generateResponse(400, 'Bad request.', error));
@@ -108,11 +106,10 @@ app.delete('/wallets/:id', authenticate, validateId, async (req, res) => {
 
 app.patch('/wallets/:id', authenticate, validateId, async (req, res) => {
     try {
-        let id = req.params.id;
         let body = _.pick(req.body, ['name']);
-        let wallet = await Wallet.findOneAndUpdate({ _id: id, _creator: req.user.id }, { $set: body }, { new: true });
+        let wallet = await Wallet.findOneAndUpdate({ _id: req.params.id, _creator: req.user.id }, { $set: body }, { new: true });
 
-        if (!wallet)
+        if (_.isNull(wallet))
             return res.status(404).send(generateResponse(404, 'Wallet not found.'));
         
         res.send(generateResponse(200, '', wallet));
@@ -124,18 +121,10 @@ app.patch('/wallets/:id', authenticate, validateId, async (req, res) => {
 app.post('/transactions', authenticate, async (req, res) => {
     try {
         let body = _.pick(req.body, ['note', 'value', '_wallet']);
-        
-        if (!ObjectID.isValid(body._wallet))
-            throw new Error('Invalid wallet ID.');
-        
-        let wallet = await Wallet.findById(body._wallet);
-
-        if (!wallet)
-            throw new Error('Wallet not found.');
-        else if(wallet._creator.toHexString() !== req.user._id.toHexString())
-            throw new Error('Invalid wallet.');
-        
         body._creator = req.user._id;
+        
+        if (!await Wallet.isValidCreator(body._wallet, body._creator))
+            throw new Error('Wallet not found.');            
 
         let transaction = await new Transaction(body).save();
         res.send(generateResponse(200, '', transaction));
@@ -170,12 +159,9 @@ app.get('/transactions/:id', authenticate, validateId, async (req, res) => {
 app.get('/transactions/wallets/:id', authenticate, validateId, async (req, res) => {
     try {
         let id = req.params.id;
-        let wallet = await Wallet.findById(id);
         
-        if (!wallet) 
+        if (!await Wallet.isValidCreator(id, req.user._id)) 
             return res.status(404).send(generateResponse(404, 'Wallet not found.'));
-        else if (wallet._creator.toHexString() !== req.user._id.toHexString())
-            throw new Error('Invalid wallet.');
 
         let transactions = await Transaction.find({ _creator: req.user._id, _wallet: id });        
         res.send(generateResponse(200, '', transactions));

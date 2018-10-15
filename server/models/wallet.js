@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const mongoose = require('mongoose');
 
 const WalletSchema = new mongoose.Schema({
@@ -16,6 +17,12 @@ const WalletSchema = new mongoose.Schema({
         required: true
     }
 });
+
+WalletSchema.statics.isValidCreator = async function(_id, _creator) {
+    let Wallet = this;
+    let wallets = await Wallet.find({ _id, _creator })
+    return wallets.length > 0;
+};
 
 const Wallet = mongoose.model('Wallet', WalletSchema);
 
