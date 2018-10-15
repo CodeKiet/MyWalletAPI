@@ -319,6 +319,25 @@ describe('DELETE /wallets/:id', () => {
             });
     });
 
+    it('should remove all transactions related to wallet', done => {
+        let hexId = _baseWallets[1]._id.toHexString();
+
+        request(app)
+            .delete(`/wallets/${hexId}`)
+            .set('x-auth', _baseUsers[1].tokens[0].token)
+            .expect(200)
+            .expect(res => expect(res.body.body._id).toBe(hexId))
+            .end(err => {
+                if (err)
+                    return done(err);
+
+                Transaction.find({ _wallet: _baseWallets[1]._id }).then(transactions => {
+                    expect(transactions.length).toBe(0);
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+
     it('should not remove an wallet created by other user', done => {
         let hexId = _baseWallets[0]._id.toHexString();
 

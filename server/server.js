@@ -100,11 +100,12 @@ app.delete('/wallets/:id', authenticate, async (req, res) => {
         return res.status(404).send(generateResponse(404, 'Invalid ID.'));
 
     try {
-        // TODO Delete transactions when added
         let wallet = await Wallet.findOneAndDelete({ _id: id, _creator: req.user._id });
 
         if (!wallet)
             return res.status(404).send(generateResponse(404, 'Wallet not found.'));
+
+        await Transaction.deleteMany({ _wallet: id });
 
         res.send(generateResponse(200, '', wallet));
     } catch (error) {
