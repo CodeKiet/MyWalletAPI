@@ -516,3 +516,38 @@ describe('GET /transactions/wallets/:id', () => {
             .end(done);
     });
 });
+
+describe('DELETE /transactions/:id', () => {
+    it('should delete a transaction', done => {
+        request(app)
+            .delete(`/transactions/${_baseTransactions[0]._id}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(200)
+            .expect(res => expect(res.body.body._id).toBe(_baseTransactions[0]._id.toHexString()))
+            .end(err => {
+                if (err)
+                    return done(err);
+
+                Transaction.find({ _creator: _baseUsers[0]._id }).then(transactions => {
+                    expect(transactions.length).toBe(0);
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+
+    it('should not delete a transaction from other user', done => {
+        request(app)
+            .delete(`/transactions/${_baseTransactions[0]._id}`)
+            .set('x-auth', _baseUsers[1].tokens[0].token)
+            .expect(400)
+            .end(err => {
+                if (err)
+                    return done(err);
+
+                Transaction.find({ _creator: _baseUsers[0]._id }).then(transactions => {
+                    expect(transactions.length).toBe(1);
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+});
