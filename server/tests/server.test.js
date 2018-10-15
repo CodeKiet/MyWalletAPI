@@ -270,7 +270,7 @@ describe('PATCH /wallets/:id', () => {
             }).end(done);
     });
 
-    it('should not update the wallet created by other user', done => {
+    it('should not update a wallet created by other user', done => {
         let hexId = _baseWallets[1]._id.toHexString();
         let body = { name: 'Some name' };
 
@@ -511,6 +511,67 @@ describe('GET /transactions/wallets/:id', () => {
     it('should return 404 if wallet not found', done => {
         request(app)
             .get(`/transactions/wallets/${new ObjectID()}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(404)
+            .end(done);
+    });
+});
+
+describe('PATCH /transactions/:id', () => {
+    it('should update the transaction', done => {
+        let hexId = _baseTransactions[0]._id.toHexString();
+        let body = { note: 'Some new note', value: 1000 };
+
+        request(app)
+            .patch(`/transactions/${hexId}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .send(body)
+            .expect(200)
+            .expect(res => {
+                expect(res.body.body._id).toBe(hexId);
+                expect(res.body.body).toMatchObject(body);
+            }).end(err => {
+                if (err)
+                    return done(err);
+
+                Wallet.findById(_baseWallets[0]._id).then(wallet => {
+                    expect(wallet.balance).toBe(_baseWallets[0].balance + body.value);
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+
+    it('should not update a transaction created by other user', done => {
+        let hexId = _baseTransactions[0]._id.toHexString();
+        let body = { note: 'Some new note', value: 1000 };
+
+        request(app)
+            .patch(`/transactions/${hexId}`)
+            .set('x-auth', _baseUsers[1].tokens[0].token)
+            .send(body)
+            .expect(404)
+            .end(err => {
+                if (err)
+                    return done(err);
+
+                Wallet.findById(_baseWallets[0]._id).then(wallet => {
+                    expect(wallet.balance).toBe(_baseWallets[0].balance + _baseTransactions[0].value);
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+
+    it('should return 404 if wallet not found', done => {
+        request(app)
+            .patch(`/wallets/${new ObjectID()}`)
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(404)
+            .end(done);
+    });
+
+    it('should return 404 for non-object ids', done => {
+        request(app)
+            .patch('/wallets/123')
             .set('x-auth', _baseUsers[0].tokens[0].token)
             .expect(404)
             .end(done);

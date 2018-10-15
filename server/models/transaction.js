@@ -38,15 +38,20 @@ TransactionSchema.pre('save', async function(next) {
 });
 
 TransactionSchema.pre('findOneAndUpdate', async function(next) {
-    let id = this.getQuery()._id;
+    let query = this.getQuery();
+    let id = query._id;
+    let creator = query._creator;
     let newValue = this.getUpdate()['$set'].value;
 
     if (_.isNumber(newValue)) {
         let transaction = await Transaction.findById(id);
-        let wallet = await Wallet.findById(transaction._wallet);
 
-        wallet.balance = wallet.balance - transaction.value + newValue;
-        await Wallet.findOneAndUpdate({ _id: wallet._id }, { $set: wallet });
+        if (creator.equals(transaction._creator)) {
+            let wallet = await Wallet.findById(transaction._wallet);
+
+            wallet.balance = wallet.balance - transaction.value + newValue;
+            await Wallet.findOneAndUpdate({ _id: wallet._id }, { $set: wallet });
+        }
     }
     
     next();

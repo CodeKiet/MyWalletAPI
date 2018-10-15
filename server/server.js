@@ -182,7 +182,7 @@ app.patch('/transactions/:id', authenticate, validateId, async (req, res) => {
         
         res.send(generateResponse(200, '', transaction));
     } catch (error) {
-        res.status(400).send(generateResponse(400, 'Bad request'));
+        res.status(400).send(generateResponse(400, error.message));
     }
 });
 
