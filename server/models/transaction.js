@@ -27,17 +27,23 @@ const TransactionSchema = new mongoose.Schema({
 TransactionSchema.pre('save', async function(next) {
     let transaction = this;
     transaction.timestamp = new Date().getTime();
-
+    
     let wallet = await Wallet.findById(transaction._wallet);
 
     if (transaction.isNew) {
         wallet.balance += transaction.value;
-        await Wallet.findOneAndUpdate({ _id: wallet._id, _creator: transaction._creator }, { $set: wallet });
+        await Wallet.findOneAndUpdate({ _id: wallet._id }, { $set: wallet });
     } else if (transaction.isModified('value')) {
         // ...
     }
-
+    
     next();
+});
+
+TransactionSchema.post('findOneAndDelete', async function (transaction) {
+    let wallet = await Wallet.findById(transaction._wallet);
+    wallet.balance -= transaction.value;
+    await Wallet.findOneAndUpdate({ _id: wallet._id }, { $set: wallet });
 });
 
 const Transaction = mongoose.model('Transaction', TransactionSchema);
