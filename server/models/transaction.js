@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const mongoose = require('mongoose');
 
 const { Wallet } = require('./wallet');
@@ -29,12 +30,23 @@ TransactionSchema.pre('save', async function(next) {
     transaction.timestamp = new Date().getTime();
     
     let wallet = await Wallet.findById(transaction._wallet);
+    wallet.balance += transaction.value;
+    
+    await Wallet.findOneAndUpdate({ _id: wallet._id }, { $set: wallet });
+    
+    next();
+});
 
-    if (transaction.isNew) {
-        wallet.balance += transaction.value;
+TransactionSchema.pre('findOneAndUpdate', async function(next) {
+    let id = this.getQuery()._id;
+    let newValue = this.getUpdate()['$set'].value;
+
+    if (_.isNumber(newValue)) {
+        let transaction = await Transaction.findById(id);
+        let wallet = await Wallet.findById(transaction._wallet);
+
+        wallet.balance = wallet.balance - transaction.value + newValue;
         await Wallet.findOneAndUpdate({ _id: wallet._id }, { $set: wallet });
-    } else if (transaction.isModified('value')) {
-        // ...
     }
     
     next();

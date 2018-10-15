@@ -170,6 +170,22 @@ app.get('/transactions/wallets/:id', authenticate, validateId, async (req, res) 
     }
 });
 
+app.patch('/transactions/:id', authenticate, validateId, async (req, res) => {
+    try {
+        let body = _.pick(req.body, ['note', 'value']);
+        body.timestamp = new Date().getTime();
+
+        let transaction = await Transaction.findOneAndUpdate({ _id: req.params.id, _creator: req.user._id }, { $set: body }, { new: true })
+
+        if (_.isNull(transaction))
+            return res.status(404).send(generateResponse(404, 'Transaction not found.'));
+        
+        res.send(generateResponse(200, '', transaction));
+    } catch (error) {
+        res.status(400).send(generateResponse(400, 'Bad request'));
+    }
+});
+
 app.delete('/transactions/:id', authenticate, async (req, res) => {
     try {
         let id = req.params.id;

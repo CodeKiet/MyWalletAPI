@@ -20,8 +20,9 @@ const WalletSchema = new mongoose.Schema({
 
 WalletSchema.statics.isValidCreator = async function(_id, _creator) {
     let Wallet = this;
-    let wallets = await Wallet.find({ _id, _creator })
-    return wallets.length > 0;
+    let wallet = await Wallet.findOne({ _id, _creator });
+
+    return !_.isNull(wallet);
 };
 
 const Wallet = mongoose.model('Wallet', WalletSchema);
