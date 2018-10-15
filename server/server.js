@@ -10,6 +10,7 @@ const { User } = require('./models/user');
 const { Wallet } = require('./models/wallet');
 const { Transaction } = require('./models/transaction');
 const { authenticate } = require('./middleware/authenticate');
+const { validateId } = require('./middleware/validate');
 const { generateResponse } = require('./utils/response');
 
 const app = express();
@@ -75,13 +76,9 @@ app.get('/wallets', authenticate, async (req, res) => {
     }
 });
 
-app.get('/wallets/:id', authenticate, async (req, res) => {
-    let id = req.params.id;
-
-    if (!ObjectID.isValid(id))
-        return res.status(404).send(generateResponse(404, 'Invalid ID.'));
-
+app.get('/wallets/:id', authenticate, validateId, async (req, res) => {
     try {
+        let id = req.params.id;
         let wallet = await Wallet.findOne({ _id: id, _creator: req.user._id });
 
         if (!wallet)
@@ -93,13 +90,9 @@ app.get('/wallets/:id', authenticate, async (req, res) => {
     }
 });
 
-app.delete('/wallets/:id', authenticate, async (req, res) => {
-    let id = req.params.id;
-
-    if (!ObjectID.isValid(id))
-        return res.status(404).send(generateResponse(404, 'Invalid ID.'));
-
+app.delete('/wallets/:id', authenticate, validateId, async (req, res) => {
     try {
+        let id = req.params.id;
         let wallet = await Wallet.findOneAndDelete({ _id: id, _creator: req.user._id });
 
         if (!wallet)
@@ -113,14 +106,10 @@ app.delete('/wallets/:id', authenticate, async (req, res) => {
     }
 });
 
-app.patch('/wallets/:id', authenticate, async (req, res) => {
-    let id = req.params.id;
-    let body = _.pick(req.body, ['name']);
-
-    if (!ObjectID.isValid(id)) 
-        return res.status(404).send(generateResponse(404, 'Invalid ID'));
-
+app.patch('/wallets/:id', authenticate, validateId, async (req, res) => {
     try {
+        let id = req.params.id;
+        let body = _.pick(req.body, ['name']);
         let wallet = await Wallet.findOneAndUpdate({ _id: id, _creator: req.user.id }, { $set: body }, { new: true });
 
         if (!wallet)
@@ -164,13 +153,9 @@ app.get('/transactions', authenticate, async (req, res) => {
     }
 });
 
-app.get('/transactions/:id', authenticate, async (req, res) => {
-    let id = req.params.id;
-    
-    if (!ObjectID.isValid(id))
-        return res.status(404).send(generateResponse(404, 'Invalid ID.'));
-
+app.get('/transactions/:id', authenticate, validateId, async (req, res) => {    
     try {
+        let id = req.params.id;
         let transaction = await Transaction.findOne({ _id: id, _creator: req.user._id });
 
         if (!transaction)
@@ -182,13 +167,9 @@ app.get('/transactions/:id', authenticate, async (req, res) => {
     }
 });
 
-app.get('/transactions/wallets/:id', authenticate, async (req, res) => {
-    let id = req.params.id;
-
-    if (!ObjectID.isValid(id))
-        return res.status(404).send(generateResponse(404, 'Invalid ID.'));
-
+app.get('/transactions/wallets/:id', authenticate, validateId, async (req, res) => {
     try {
+        let id = req.params.id;
         let wallet = await Wallet.findById(id);
         
         if (!wallet) 
@@ -204,12 +185,8 @@ app.get('/transactions/wallets/:id', authenticate, async (req, res) => {
 });
 
 app.delete('/transactions/:id', authenticate, async (req, res) => {
-    let id = req.params.id;
-
-    if (!ObjectID.isValid(id))
-        return res.status(404).send(generateResponse(404, 'Invalid ID.'));
-
     try {
+        let id = req.params.id;
         let transaction = await Transaction.findOneAndDelete({ _id: id, _creator: req.user._id });
 
         if (!transaction)
