@@ -165,6 +165,54 @@ describe('DELETE /users/me/token', () => {
     });
 });
 
+describe('DELETE /users', () => {
+    it('should remove an user', done => {
+        let hexId = _baseUsers[0]._id.toHexString();
+
+        request(app)
+            .delete('/users')
+            .set('x-auth', _baseUsers[0].tokens[0].token)
+            .expect(200)
+            .expect(res => expect(res.body.body._id).toBe(hexId))
+            .end(err => {
+                if (err)
+                    return done(err);
+
+                User.find().then(users => {
+                    expect(users.length).toBe(1);
+                    expect(users[0]._id.toHexString()).not.toBe(hexId);
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+
+    it('should remove all data related to user', done => {
+        let hexId = _baseUsers[1]._id.toHexString();
+
+        request(app)
+            .delete('/users')
+            .set('x-auth', _baseUsers[1].tokens[0].token)
+            .expect(200)
+            .expect(res => expect(res.body.body._id).toBe(hexId))
+            .end(err => {
+                if (err)
+                    return done(err);
+
+                User.find().then(users => {
+                    expect(users.length).toBe(1);
+                    expect(users[0]._id.toHexString()).not.toBe(hexId);
+                    return Wallet.find({ _creator: hexId });
+                }).then(wallets => {
+                    expect(wallets.length).toBe(0);
+                    return Transaction.find({ _creator: hexId });
+                }).then(transactions => {
+                    expect(transactions.length).toBe(0);
+                    done();
+                }).catch(e => done(e));
+            });
+    });
+});
+
 describe('POST /wallets', () => {
     it('should create a new wallet', done => {
         let name = 'Bank X';
