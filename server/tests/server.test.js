@@ -32,6 +32,7 @@ describe('POST /users', () => {
             .expect(res => {
                 expect(res.headers['x-auth']).toBeTruthy();
                 expect(res.body.body._id).toBeTruthy();
+                expect(res.body.body.token).toBeTruthy();
                 expect(res.body.body.email).toBe(email);
             })
             .end(err => {
