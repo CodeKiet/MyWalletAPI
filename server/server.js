@@ -53,6 +53,22 @@ app.delete('/users/me/token', authenticate, async (req, res) => {
     }
 });
 
+app.delete('/users', authenticate, async (req, res) => {
+    try {
+        let id = req.user._id;
+        let user = await User.findByIdAndDelete(id);
+
+        if (_.isNull(user))
+            return res.status(404).send(generateResponse(404, 'User not found.'));
+
+        await Transaction.deleteMany({ _creator: id });
+        await Wallet.deleteMany({ _creator: id });
+        res.send(generateResponse(200, '', user));
+    } catch (error) {
+        res.status(400).send(generateResponse(400, 'Bad request.', error));
+    }
+});
+
 app.post('/wallets', authenticate, async (req, res) => {
     try {
         let wallet = await new Wallet({
