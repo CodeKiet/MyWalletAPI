@@ -157,25 +157,6 @@ app.get('/transactions', authenticate, async (req, res) => {
     }
 });
 
-app.get('/transactions/month', authenticate, async (req, res) => {
-    try {
-        let date = new Date();
-        let firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
-        let lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-        
-        let transactions = await Transaction.find({
-            "timestamp": {
-                "$gte": firstDay, 
-                "$lt": lastDay
-            }
-        });
-        
-        res.send(generateResponse(200, '', transactions));
-    } catch (error) {
-        res.status(400).send(generateResponse(400, error.message));
-    }
-});
-
 app.get('/transactions/:id', authenticate, validateId, async (req, res) => {    
     try {
         let id = req.params.id;
